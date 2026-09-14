@@ -133,7 +133,9 @@ async def upload_model(
         is_watertight = mesh.is_watertight
         volume = str(round(mesh.volume, 2)) if mesh.is_volume else "N/A"
         bbox = " x ".join([str(round(dim, 2)) for dim in mesh.bounding_box.extents])
-        status_msg = "DFM Passed" if is_watertight else "DFM Warning: Mesh not watertight"
+        
+        # Updated tagging logic to avoid conflict with major project
+        status_msg = "Watertight Mesh" if is_watertight else "Warning: Mesh not watertight"
         
     except Exception as e:
         if os.path.exists(file_location):
