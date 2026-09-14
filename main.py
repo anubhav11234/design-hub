@@ -144,7 +144,8 @@ async def upload_model(
     except Exception as e:
         if os.path.exists(file_location):
             os.remove(file_location)
-        raise HTTPException(status_code=422, detail="Invalid STL content. File rejected and deleted.")
+        # FIX: Surface the exact error message so we can see if it's missing math dependencies
+        raise HTTPException(status_code=422, detail=f"Processing Error: {str(e)}")
 
     # Save to database
     db_model = database.Model(
