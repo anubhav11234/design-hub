@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Design Hub | Engineer Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #050505; color: #e5e5e5; font-family: 'Courier New', Courier, monospace; }
+        .neon-border { border: 1px solid #00FF00; box-shadow: 0 0 10px rgba(0, 255, 0, 0.1); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center">
+
+    <nav class="w-full border-b border-[#00FF00] bg-[#0a0a0a] p-4 flex justify-between items-center shadow-[0_0_10px_rgba(0,255,0,0.2)] mb-10">
+        <div class="flex items-center gap-2">
+            <span class="text-xl font-extrabold text-[#00FF00] border border-[#00FF00] px-2 rounded">DH</span>
+            <span class="font-bold text-white">Public Profile</span>
+        </div>
+        <div class="flex gap-4">
+            <a href="landing.html" class="text-[#00FF00] hover:text-white font-bold flex items-center border border-[#00FF00] px-4 py-1 rounded transition">Join Design Hub</a>
+        </div>
+    </nav>
+
+    <div class="w-full max-w-4xl px-6">
+        <h1 class="text-4xl font-bold text-[#00FF00] mb-2"><span id="username-display">Engineer</span></h1>
+        <p class="text-gray-400 mb-8 border-b border-gray-800 pb-4">Open Source Contributions</p>
+        
+        <div id="portfolioContainer" class="space-y-6">
+            <p class="text-gray-500 text-center py-10">Fetching repositories...</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://design-hub-2lsl.onrender.com";
+        const urlParams = new URLSearchParams(window.location.search);
+        const profileUser = urlParams.get('user');
+
+        if (!profileUser) {
+            document.getElementById('portfolioContainer').innerHTML = "<p class='text-red-500 text-center py-10'>No user specified in URL.</p>";
+            document.getElementById('username-display').innerText = "Unknown";
+        } else {
+            document.getElementById('username-display').innerText = "@" + profileUser;
+            loadPublicPortfolio();
+        }
+
+        async function loadPublicPortfolio() {
+            try {
+                const response = await fetch(`${API_URL}/api/user/${encodeURIComponent(profileUser)}`);
+                if (!response.ok) throw new Error("User not found");
+                
+                const data = await response.json();
+                const container = document.getElementById('portfolioContainer');
+                container.innerHTML = "";
+
+                if (data.models.length === 0) {
+                    container.innerHTML = `<p class="text-gray-500 text-center py-10">This user has no open-source models.</p>`;
+                    return;
+                }
+
+                data.models.forEach(model => {
+                    container.innerHTML += `
+                        <div class="neon-border bg-[#0a0a0a] rounded-lg p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:shadow-[0_0_15px_rgba(0,255,0,0.3)] transition">
+                            <div class="flex-1">
+                                <h2 class="text-2xl font-bold text-white mb-2">${model.title}</h2>
+                                <p class="text-gray-400 text-sm mb-4">${model.description}</p>
+                                <span class="px-2 py-1 bg-gray-900 border border-yellow-500 text-yellow-500 text-xs rounded font-bold">${model.status}</span>
+                            </div>
+                            <div class="flex flex-col gap-2 min-w-[140px]">
+                                <button onclick="window.location.href='detail.html?id=${model.id}'" class="px-4 py-2 bg-gray-800 text-white font-bold rounded hover:bg-gray-700 text-sm text-center transition">View 3D Model</button>
+                                <button onclick="window.location.href='${API_URL}/api/download/${model.id}'" class="px-4 py-2 bg-[#00FF00] text-black font-bold rounded hover:bg-white text-sm text-center shadow-[0_0_10px_rgba(0,255,0,0.3)] transition">Download .STL</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                document.getElementById('portfolioContainer').innerHTML = "<p class='text-red-500 text-center py-10'>Failed to load profile or user does not exist.</p>";
+            }
+        }
+    </script>
+</body>
+</html>
