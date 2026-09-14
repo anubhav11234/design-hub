@@ -119,19 +119,18 @@ async def upload_model(
     # FIX 1: Enforce forward slash path for Linux compatibility
     file_location = f"{UPLOAD_DIR}/{safe_filename}"
     
-    file.file.seek(0, 2)
-    file_size = file.file.tell()
-    file.file.seek(0)
+    # FIX 2: Safely read the entire file into memory before saving to avoid 0-byte bug
+    content = await file.read()
     
-    if file_size > MAX_FILE_SIZE:
+    if len(content) > MAX_FILE_SIZE:
         raise HTTPException(status_code=413, detail="File too large. Maximum size is 50MB.")
 
+    # Write the actual content to disk
     with open(file_location, "wb") as buffer:
-        while content := await file.read(1024 * 1024):
-            buffer.write(content)
+        buffer.write(content)
 
     try:
-        # FIX 2: Force Trimesh to strictly parse it as an STL mesh
+        # FIX 3: Force Trimesh to strictly parse it as an STL mesh
         mesh = trimesh.load(file_location, file_type='stl', force='mesh')
         
         if mesh.is_empty:
@@ -218,7 +217,7 @@ def download_model(project_id: str, db: Session = Depends(get_db)):
     if not model:
         raise HTTPException(status_code=404, detail="File not found.")
         
-    # FIX 3: Protect against ephemeral storage wipes on Render
+    # FIX 4: Protect against ephemeral storage wipes on Render
     if not os.path.exists(model.file_path):
         raise HTTPException(status_code=404, detail="File missing from server. It was likely cleared by temporary hosting. Please delete this record and re-upload.")
         
