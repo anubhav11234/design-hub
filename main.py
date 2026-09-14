@@ -115,7 +115,9 @@ async def upload_model(
 
     project_id = str(uuid.uuid4())[:8]
     safe_filename = f"{project_id}.stl"
-    file_location = os.path.join(UPLOAD_DIR, safe_filename)
+    
+    # FIX 1: Enforce forward slash path for Linux compatibility
+    file_location = f"{UPLOAD_DIR}/{safe_filename}"
     
     file.file.seek(0, 2)
     file_size = file.file.tell()
@@ -129,7 +131,9 @@ async def upload_model(
             buffer.write(content)
 
     try:
-        mesh = trimesh.load(file_location)
+        # FIX 2: Force Trimesh to strictly parse it as an STL mesh
+        mesh = trimesh.load(file_location, file_type='stl', force='mesh')
+        
         if mesh.is_empty:
             raise ValueError("Empty geometry")
             
@@ -214,6 +218,10 @@ def download_model(project_id: str, db: Session = Depends(get_db)):
     if not model:
         raise HTTPException(status_code=404, detail="File not found.")
         
+    # FIX 3: Protect against ephemeral storage wipes on Render
+    if not os.path.exists(model.file_path):
+        raise HTTPException(status_code=404, detail="File missing from server. It was likely cleared by temporary hosting. Please delete this record and re-upload.")
+        
     # Security: If the model is private, the user shouldn't be able to download it blindly via URL
     if not model.is_public:
         raise HTTPException(status_code=403, detail="This file is private.")
@@ -235,6 +243,7 @@ def delete_model(project_id: str, current_user: database.User = Depends(get_curr
     db.delete(model)
     db.commit()
     return {"message": "Model deleted"}
+
 @app.get("/api/search")
 def search_models(q: str, db: Session = Depends(get_db)):
     search_pattern = f"%{q}%"
