@@ -69,7 +69,6 @@ def register_user(username: str = Form(...), password: str = Form(...), db: Sess
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
     
-    # FIX: Truncate password to prevent bcrypt 72-byte limit crash
     safe_password = password[:72]
     hashed_password = pwd_context.hash(safe_password)
     
@@ -83,7 +82,6 @@ def register_user(username: str = Form(...), password: str = Form(...), db: Sess
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(database.User).filter(database.User.username == form_data.username).first()
     
-    # FIX: Truncate login password to match the registration behavior
     safe_login_password = form_data.password[:72]
     
     if not user or not pwd_context.verify(safe_login_password, user.hashed_password):
@@ -116,21 +114,17 @@ async def upload_model(
     project_id = str(uuid.uuid4())[:8]
     safe_filename = f"{project_id}.stl"
     
-    # FIX 1: Enforce forward slash path for Linux compatibility
     file_location = f"{UPLOAD_DIR}/{safe_filename}"
     
-    # FIX 2: Safely read the entire file into memory before saving to avoid 0-byte bug
     content = await file.read()
     
     if len(content) > MAX_FILE_SIZE:
         raise HTTPException(status_code=413, detail="File too large. Maximum size is 50MB.")
 
-    # Write the actual content to disk
     with open(file_location, "wb") as buffer:
         buffer.write(content)
 
     try:
-        # FIX 3: Force Trimesh to strictly parse it as an STL mesh
         mesh = trimesh.load(file_location, file_type='stl', force='mesh')
         
         if mesh.is_empty:
@@ -144,10 +138,8 @@ async def upload_model(
     except Exception as e:
         if os.path.exists(file_location):
             os.remove(file_location)
-        # FIX: Surface the exact error message so we can see if it's missing math dependencies
         raise HTTPException(status_code=422, detail=f"Processing Error: {str(e)}")
 
-    # Save to database
     db_model = database.Model(
         id=project_id,
         filename=file.filename,
@@ -207,8 +199,6 @@ def get_model_details(project_id: str, db: Session = Depends(get_db)):
     model = db.query(database.Model).filter(database.Model.id == project_id).first()
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
-    if not model.is_public:
-        raise HTTPException(status_code=403, detail="Model is private")
     return {"model": model}
 
 @app.get("/api/download/{project_id}")
@@ -218,13 +208,8 @@ def download_model(project_id: str, db: Session = Depends(get_db)):
     if not model:
         raise HTTPException(status_code=404, detail="File not found.")
         
-    # FIX 4: Protect against ephemeral storage wipes on Render
     if not os.path.exists(model.file_path):
         raise HTTPException(status_code=404, detail="File missing from server. It was likely cleared by temporary hosting. Please delete this record and re-upload.")
-        
-    # Security: If the model is private, the user shouldn't be able to download it blindly via URL
-    if not model.is_public:
-        raise HTTPException(status_code=403, detail="This file is private.")
         
     return FileResponse(path=model.file_path, filename=model.filename)
 
@@ -236,7 +221,6 @@ def delete_model(project_id: str, current_user: database.User = Depends(get_curr
     if model.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to delete this model")
     
-    # Remove file from disk
     if os.path.exists(model.file_path):
         os.remove(model.file_path)
         
@@ -247,7 +231,6 @@ def delete_model(project_id: str, current_user: database.User = Depends(get_curr
 @app.get("/api/search")
 def search_models(q: str, db: Session = Depends(get_db)):
     search_pattern = f"%{q}%"
-    # Join with User table to search by both model title and owner's username
     results = db.query(database.Model, database.User).join(database.User, database.Model.owner_id == database.User.id)\
         .filter(database.Model.is_public == True)\
         .filter((database.Model.title.ilike(search_pattern)) | (database.User.username.ilike(search_pattern)))\
