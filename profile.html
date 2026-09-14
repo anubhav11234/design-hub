@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Design Hub | My Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #050505; color: #e5e5e5; font-family: 'Courier New', Courier, monospace; }
+        .neon-border { border: 1px solid #00FF00; box-shadow: 0 0 10px rgba(0, 255, 0, 0.1); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center">
+
+    <nav class="w-full border-b border-[#00FF00] bg-[#0a0a0a] p-4 flex justify-between items-center shadow-[0_0_10px_rgba(0,255,0,0.2)] mb-10">
+        <div class="flex items-center gap-2">
+            <span class="text-xl font-extrabold text-[#00FF00] border border-[#00FF00] px-2 rounded">DH</span>
+            <span class="font-bold text-white">My Portfolio</span>
+        </div>
+        <div class="flex gap-4">
+            <a href="analyze.html" class="bg-[#00FF00] text-black px-4 font-bold rounded hover:bg-white transition flex items-center justify-center">+ UPLOAD</a>
+            <a href="feed.html" class="text-gray-400 hover:text-[#00FF00] font-bold flex items-center">Global Feed</a>
+            <button onclick="localStorage.clear(); window.location.href='landing.html'" class="text-red-500 font-bold flex items-center">Logout</button>
+        </div>
+    </nav>
+
+    <div class="w-full max-w-4xl px-6">
+        <div class="flex items-center justify-between mb-2">
+            <h1 class="text-3xl font-bold text-[#00FF00]"><span id="username-display"></span>'s Repositories</h1>
+            <button onclick="shareProfile()" class="px-4 py-2 border border-[#00FF00] text-[#00FF00] rounded hover:bg-[#00FF00] hover:text-black font-bold text-sm transition shadow-[0_0_10px_rgba(0,255,0,0.2)]">
+                Copy Public Profile Link
+            </button>
+        </div>
+        <p class="text-gray-400 mb-8 border-b border-gray-800 pb-4">Manage your private and open-source hardware.</p>
+        
+        <div id="portfolioContainer" class="space-y-6">
+            <p class="text-gray-500 text-center py-10">Fetching your repositories...</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000";
+        const token = localStorage.getItem('access_token');
+        if (!token) window.location.href = 'auth.html';
+        
+        const username = localStorage.getItem('username') || "Engineer";
+        document.getElementById('username-display').innerText = username;
+
+        function shareProfile() {
+            const profileUrl = `${window.location.origin}/public_profile.html?user=${encodeURIComponent(username)}`;
+            navigator.clipboard.writeText(profileUrl);
+            alert(`Profile link copied: ${profileUrl}`);
+        }
+
+        async function loadPortfolio() {
+            try {
+                const response = await fetch(`${API_URL}/api/portfolio`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                const container = document.getElementById('portfolioContainer');
+                container.innerHTML = "";
+
+                if (data.models.length === 0) {
+                    container.innerHTML = `<p class="text-gray-500 text-center py-10">You haven't pushed any models yet.</p>`;
+                    return;
+                }
+
+                data.models.forEach(model => {
+                    const visibilityBadge = model.is_public 
+                        ? `<span class="px-2 py-1 bg-green-900 border border-[#00FF00] text-[#00FF00] text-xs rounded font-bold">Public</span>`
+                        : `<span class="px-2 py-1 bg-gray-900 border border-gray-500 text-gray-500 text-xs rounded font-bold">Private</span>`;
+
+                    container.innerHTML += `
+                        <div class="neon-border bg-[#0a0a0a] rounded-lg p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:shadow-[0_0_15px_rgba(0,255,0,0.3)] transition">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <h2 class="text-2xl font-bold text-white">${model.title}</h2>
+                                    ${visibilityBadge}
+                                </div>
+                                <p class="text-gray-400 text-sm mb-4">${model.description}</p>
+                                <span class="px-2 py-1 border border-yellow-500 text-yellow-500 text-xs rounded font-bold">${model.status}</span>
+                            </div>
+                            <div class="flex flex-col gap-2 min-w-[120px]">
+                                <button onclick="window.location.href='detail.html?id=${model.id}'" class="px-4 py-2 bg-gray-800 text-white font-bold rounded hover:bg-gray-700 text-sm text-center transition">View Details</button>
+                                <button onclick="deleteModel('${model.id}')" class="px-4 py-2 border border-red-500 text-red-500 font-bold rounded hover:bg-red-500 hover:text-white text-sm text-center transition">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                document.getElementById('portfolioContainer').innerHTML = "<p class='text-red-500'>Failed to load portfolio.</p>";
+            }
+        }
+
+        async function deleteModel(id) {
+            if (!confirm("Are you sure you want to delete this model? This action cannot be undone.")) return;
+            try {
+                const response = await fetch(`${API_URL}/api/model/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    loadPortfolio();
+                } else {
+                    const data = await response.json();
+                    alert(`Failed to delete: ${data.detail}`);
+                }
+            } catch (err) {
+                alert("Server connection failed.");
+            }
+        }
+        loadPortfolio();
+    </script>
+</body>
+</html>

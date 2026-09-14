@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Design Hub | Model Details</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        body { background-color: #050505; color: #e5e5e5; font-family: 'Courier New', Courier, monospace; }
+        .neon-border { border: 1px solid #00FF00; box-shadow: 0 0 10px rgba(0, 255, 0, 0.2); }
+        #viewer-container { width: 100%; height: 500px; background-color: #111; border-radius: 8px; overflow: hidden; position: relative; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center pb-20">
+
+    <nav class="w-full border-b border-[#00FF00] bg-[#0a0a0a] p-4 flex justify-between items-center shadow-[0_0_10px_rgba(0,255,0,0.2)] mb-10">
+        <div class="flex items-center gap-2">
+            <span class="text-xl font-extrabold text-[#00FF00] border border-[#00FF00] px-2 rounded">DH</span>
+            <span class="font-bold text-white">Model Viewer</span>
+        </div>
+        <div class="flex gap-4">
+            <a href="feed.html" class="text-gray-400 hover:text-[#00FF00] font-bold flex items-center">Global Feed</a>
+            <a href="profile.html" class="text-gray-400 hover:text-[#00FF00] font-bold flex items-center">My Portfolio</a>
+        </div>
+    </nav>
+
+    <div class="w-full max-w-6xl px-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="md:col-span-1 neon-border rounded-lg p-6 bg-[#0a0a0a] h-fit">
+                <h1 id="modelTitle" class="text-2xl font-bold text-[#00FF00] mb-2">Loading...</h1>
+                <p id="modelStatus" class="mb-4"></p>
+                <div class="space-y-2 text-sm text-gray-400 mb-6 border-b border-gray-800 pb-4">
+                    <p><strong>Owner ID:</strong> <span id="modelOwner" class="text-white"></span></p>
+                    <p><strong>Volume:</strong> <span id="modelVol" class="text-white"></span> mm³</p>
+                    <p><strong>Bounding Box:</strong> <span id="modelBbox" class="text-white"></span> mm</p>
+                </div>
+                <p id="modelDesc" class="text-sm text-gray-300 mb-6"></p>
+                <button id="downloadBtn" class="w-full py-3 bg-[#00FF00] text-black font-bold rounded shadow-[0_0_15px_#00FF00] hover:bg-white transition hidden">DOWNLOAD .STL</button>
+            </div>
+            
+            <div class="md:col-span-2 neon-border rounded-lg bg-[#0a0a0a] p-2">
+                <div id="viewer-container">
+                    <p id="viewer-placeholder" class="absolute inset-0 flex items-center justify-center text-gray-600 animate-pulse">Fetching Geometry...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000";
+        const urlParams = new URLSearchParams(window.location.search);
+        const modelId = urlParams.get('id');
+        let scene, camera, renderer, modelMesh;
+
+        function init3DViewer() {
+            const container = document.getElementById('viewer-container');
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            const light = new THREE.DirectionalLight(0xffffff, 1);
+            light.position.set(1, 1, 1).normalize();
+            scene.add(light);
+            scene.add(new THREE.AmbientLight(0x404040));
+            camera.position.z = 100;
+            function animate() { requestAnimationFrame(animate); if (modelMesh) modelMesh.rotation.y += 0.01; controls.update(); renderer.render(scene, camera); }
+            animate();
+        }
+
+        async function loadModelData() {
+            if (!modelId) {
+                document.getElementById('modelTitle').innerText = "Invalid Model ID";
+                return;
+            }
+            try {
+                const response = await fetch(`${API_URL}/api/model/${modelId}`);
+                if (!response.ok) throw new Error("Model private or not found");
+                const data = await response.json();
+                
+                document.getElementById('modelTitle').innerText = data.model.title;
+                document.getElementById('modelDesc').innerText = data.model.description;
+                document.getElementById('modelOwner').innerText = data.model.owner_id;
+                document.getElementById('modelVol').innerText = data.model.volume_mm3;
+                document.getElementById('modelBbox').innerText = data.model.bbox;
+                document.getElementById('modelStatus').innerHTML = `<span class="px-2 py-1 bg-gray-900 border border-yellow-500 text-yellow-500 text-xs rounded font-bold">${data.model.status}</span>`;
+                
+                const dlBtn = document.getElementById('downloadBtn');
+                dlBtn.classList.remove('hidden');
+                dlBtn.onclick = () => window.location.href = `${API_URL}/api/download/${modelId}`;
+
+                loadGeometry(modelId);
+            } catch (err) {
+                document.getElementById('modelTitle').innerText = "Access Denied / Not Found";
+                document.getElementById('viewer-placeholder').innerText = "Geometry Offline";
+                document.getElementById('viewer-placeholder').classList.remove('animate-pulse');
+            }
+        }
+
+        function loadGeometry(id) {
+            const loader = new THREE.STLLoader();
+            loader.load(`${API_URL}/api/download/${id}`, function (geometry) {
+                const material = new THREE.MeshPhongMaterial({ color: 0x00FF00, specular: 0x111111, shininess: 200 });
+                modelMesh = new THREE.Mesh(geometry, material);
+                geometry.computeBoundingBox();
+                const center = geometry.boundingBox.getCenter(new THREE.Vector3());
+                modelMesh.position.sub(center);
+                scene.add(modelMesh);
+                document.getElementById('viewer-placeholder').classList.add('hidden');
+            }, undefined, function (error) {
+                document.getElementById('viewer-placeholder').innerText = "Error loading geometry.";
+                document.getElementById('viewer-placeholder').classList.remove('animate-pulse');
+            });
+        }
+
+        init3DViewer();
+        loadModelData();
+    </script>
+</body>
+</html>

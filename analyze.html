@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Design Hub | Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        body { background-color: #050505; color: #e5e5e5; font-family: 'Courier New', Courier, monospace; }
+        .neon-border { border: 1px solid #00FF00; box-shadow: 0 0 10px rgba(0, 255, 0, 0.2); }
+        #viewer-container { width: 100%; height: 400px; background-color: #111; border-radius: 8px; overflow: hidden; position: relative; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center pb-20">
+
+    <nav class="w-full border-b border-[#00FF00] bg-[#0a0a0a] p-4 flex justify-between items-center shadow-[0_0_10px_rgba(0,255,0,0.2)] mb-10">
+        <div class="flex items-center gap-2">
+            <span class="text-xl font-extrabold text-[#00FF00] border border-[#00FF00] px-2 rounded">DH</span>
+            <span class="font-bold text-white">Analyzer Workspace</span>
+        </div>
+        <div class="flex gap-4">
+            <a href="feed.html" class="text-gray-400 hover:text-[#00FF00] font-bold">Global Feed</a>
+            <a href="profile.html" class="text-gray-400 hover:text-[#00FF00] font-bold">My Portfolio</a>
+            <button onclick="localStorage.clear(); window.location.href='landing.html'" class="text-red-500 font-bold">Logout</button>
+        </div>
+    </nav>
+
+    <div class="w-full max-w-5xl px-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+            <div class="neon-border rounded-lg p-8 bg-[#0a0a0a] flex flex-col items-center justify-center">
+                <h2 class="text-xl font-semibold mb-4 text-[#00FF00]">Upload & Analyze</h2>
+                
+                <input type="text" id="modelTitle" placeholder="Model Title..." class="w-full mb-4 px-4 py-2 bg-[#111] border border-gray-700 text-white rounded focus:border-[#00FF00] outline-none">
+                <textarea id="modelDesc" placeholder="Description & Engineering details..." class="w-full mb-4 px-4 py-2 bg-[#111] border border-gray-700 text-white rounded focus:border-[#00FF00] outline-none h-24"></textarea>
+
+                <input type="file" id="fileInput" accept=".stl" class="hidden">
+                <button onclick="document.getElementById('fileInput').click()" class="w-full py-2 border border-[#00FF00] text-[#00FF00] rounded hover:bg-[#00FF00] hover:text-black transition mb-4 font-bold tracking-wider">
+                    SELECT .STL GEOMETRY
+                </button>
+                
+                <div class="flex items-center gap-3 w-full mb-4">
+                    <input type="checkbox" id="publicToggle" class="w-5 h-5 accent-[#00FF00]">
+                    <label class="text-sm font-bold text-gray-300">Make Open Source (Publish to Feed)</label>
+                </div>
+
+                <button onclick="uploadFile()" id="uploadBtn" class="hidden w-full py-2 bg-[#00FF00] text-black font-bold rounded shadow-[0_0_15px_#00FF00]">
+                    PUSH TO SERVER
+                </button>
+                <p id="statusText" class="text-sm mt-4 text-gray-500"></p>
+            </div>
+
+            <div class="neon-border rounded-lg bg-[#0a0a0a] p-2">
+                <div id="viewer-container">
+                    <p id="viewer-placeholder" class="absolute inset-0 flex items-center justify-center text-gray-600">3D Viewport Offline</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000";
+        const token = localStorage.getItem('access_token');
+        if (!token) window.location.href = 'auth.html';
+
+        let scene, camera, renderer, model;
+        function init3DViewer() {
+            const container = document.getElementById('viewer-container');
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            const light = new THREE.DirectionalLight(0xffffff, 1);
+            light.position.set(1, 1, 1).normalize();
+            scene.add(light);
+            scene.add(new THREE.AmbientLight(0x404040));
+            camera.position.z = 100;
+            function animate() { requestAnimationFrame(animate); if (model) model.rotation.y += 0.01; controls.update(); renderer.render(scene, camera); }
+            animate();
+        }
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            if(this.files.length > 0) {
+                document.getElementById('uploadBtn').classList.remove('hidden');
+                document.getElementById('statusText').innerText = `Selected: ${this.files[0].name}`;
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const loader = new THREE.STLLoader();
+                    const geometry = loader.parse(event.target.result);
+                    const material = new THREE.MeshPhongMaterial({ color: 0x00FF00, specular: 0x111111, shininess: 200 });
+                    if (model) scene.remove(model);
+                    model = new THREE.Mesh(geometry, material);
+                    geometry.computeBoundingBox();
+                    const center = geometry.boundingBox.getCenter(new THREE.Vector3());
+                    model.position.sub(center);
+                    scene.add(model);
+                    document.getElementById('viewer-placeholder').classList.add('hidden');
+                };
+                reader.readAsArrayBuffer(e.target.files[0]);
+            }
+        });
+
+        async function uploadFile() {
+            const file = document.getElementById('fileInput').files[0];
+            const isPublic = document.getElementById('publicToggle').checked;
+            const title = document.getElementById('modelTitle').value || "Untitled Part";
+            const desc = document.getElementById('modelDesc').value;
+            const statusText = document.getElementById('statusText');
+            
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("is_public", isPublic);
+            formData.append("title", title);
+            formData.append("description", desc);
+
+            statusText.innerText = "Authenticating and pushing...";
+            statusText.className = "text-sm mt-4 text-[#00FF00] animate-pulse";
+
+            try {
+                const response = await fetch(`${API_URL}/api/upload`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                if(response.ok) {
+                    statusText.innerText = isPublic ? "Published to Community Feed!" : "Saved to Private Portfolio.";
+                    statusText.classList.remove('animate-pulse');
+                    setTimeout(() => window.location.href = isPublic ? 'feed.html' : 'profile.html', 1500);
+                } else {
+                    const data = await response.json();
+                    statusText.innerText = `Upload failed: ${data.detail || 'Try logging in again.'}`;
+                    statusText.className = "text-sm mt-4 text-red-500";
+                }
+            } catch (error) {
+                statusText.innerText = "Server connection failed.";
+                statusText.className = "text-sm mt-4 text-red-500";
+            }
+        }
+        init3DViewer();
+    </script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design Hub | Authenticate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #050505; color: #e5e5e5; font-family: 'Courier New', Courier, monospace; }
+        .neon-text { color: #00FF00; text-shadow: 0 0 5px rgba(0, 255, 0, 0.5); }
+        .neon-border { border: 1px solid #00FF00; box-shadow: 0 0 10px rgba(0, 255, 0, 0.2); }
+        .neon-input { 
+            background: #111; 
+            border: 1px solid #333; 
+            color: #fff; 
+            transition: all 0.3s;
+        }
+        .neon-input:focus {
+            outline: none;
+            border-color: #00FF00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+        .neon-bg-hover:hover { background-color: #00FF00; color: #000; box-shadow: 0 0 15px #00FF00; transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+
+    <!-- Decorative Background Elements -->
+    <div class="absolute top-0 left-0 w-full h-full pointer-events-none opacity-10" style="background-image: radial-gradient(#00FF00 1px, transparent 1px); background-size: 30px 30px;"></div>
+
+    <div class="w-full max-w-md px-6 relative z-10">
+        
+        <div class="flex flex-col items-center mb-8">
+            <div class="w-16 h-16 flex items-center justify-center border-2 border-[#00FF00] bg-[#0a0a0a] rounded-lg shadow-[0_0_15px_rgba(0,255,0,0.3)] mb-4">
+                <span class="text-3xl font-extrabold text-[#00FF00] tracking-tighter" style="text-shadow: 0 0 8px #00FF00;">DH</span>
+            </div>
+            <h1 class="text-3xl font-bold neon-text">System Access<span class="text-white animate-pulse">_</span></h1>
+        </div>
+
+        <div class="neon-border rounded-lg p-8 bg-[#0a0a0a]">
+            <!-- Tab Navigation -->
+            <div class="flex mb-6 border-b border-gray-800">
+                <button id="tab-login" onclick="switchTab('login')" class="w-1/2 py-2 font-bold text-[#00FF00] border-b-2 border-[#00FF00]">LOGIN</button>
+                <button id="tab-register" onclick="switchTab('register')" class="w-1/2 py-2 font-bold text-gray-500 border-b-2 border-transparent hover:text-gray-300">REGISTER</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1">USERNAME</label>
+                    <input type="text" id="login-username" required class="neon-input w-full px-4 py-2 rounded">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1">PASSWORD</label>
+                    <input type="password" id="login-password" required class="neon-input w-full px-4 py-2 rounded">
+                </div>
+                <button type="submit" class="w-full mt-4 py-3 bg-[#00FF00] text-black font-bold rounded shadow-[0_0_15px_#00FF00] hover:bg-white hover:shadow-[0_0_20px_#fff] transition-all">
+                    INITIALIZE SESSION
+                </button>
+            </form>
+
+            <!-- Register Form (Hidden by default) -->
+            <form id="form-register" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1">NEW USERNAME</label>
+                    <input type="text" id="reg-username" required class="neon-input w-full px-4 py-2 rounded">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1">PASSWORD</label>
+                    <input type="password" id="reg-password" required class="neon-input w-full px-4 py-2 rounded">
+                </div>
+                <button type="submit" class="w-full mt-4 py-3 border border-[#00FF00] text-[#00FF00] font-bold rounded neon-bg-hover">
+                    CREATE REPOSITORY
+                </button>
+            </form>
+
+            <!-- Status Message -->
+            <div id="auth-status" class="mt-4 text-center text-sm hidden font-bold"></div>
+        </div>
+        
+        <div class="mt-6 text-center">
+            <a href="landing.html" class="text-xs text-gray-500 hover:text-[#00FF00]">< Return to Main Framework</a>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000";
+
+        // Toggle between Login and Register views
+        function switchTab(tab) {
+            const loginForm = document.getElementById('form-login');
+            const regForm = document.getElementById('form-register');
+            const loginTab = document.getElementById('tab-login');
+            const regTab = document.getElementById('tab-register');
+            const statusDiv = document.getElementById('auth-status');
+            
+            statusDiv.classList.add('hidden'); // Clear errors on switch
+
+            if (tab === 'login') {
+                loginForm.classList.remove('hidden');
+                regForm.classList.add('hidden');
+                
+                loginTab.classList.add('text-[#00FF00]', 'border-[#00FF00]');
+                loginTab.classList.remove('text-gray-500', 'border-transparent');
+                
+                regTab.classList.remove('text-[#00FF00]', 'border-[#00FF00]');
+                regTab.classList.add('text-gray-500', 'border-transparent');
+            } else {
+                loginForm.classList.add('hidden');
+                regForm.classList.remove('hidden');
+                
+                regTab.classList.add('text-[#00FF00]', 'border-[#00FF00]');
+                regTab.classList.remove('text-gray-500', 'border-transparent');
+                
+                loginTab.classList.remove('text-[#00FF00]', 'border-[#00FF00]');
+                loginTab.classList.add('text-gray-500', 'border-transparent');
+            }
+        }
+
+        // Show status messages
+        function showStatus(message, isError) {
+            const statusDiv = document.getElementById('auth-status');
+            statusDiv.textContent = message;
+            statusDiv.classList.remove('hidden', 'text-[#00FF00]', 'text-red-500');
+            statusDiv.classList.add(isError ? 'text-red-500' : 'text-[#00FF00]');
+        }
+
+        // Handle Registration
+        async function handleRegister(e) {
+            e.preventDefault();
+            const username = document.getElementById('reg-username').value;
+            const password = document.getElementById('reg-password').value;
+            
+            showStatus("Allocating user space...", false);
+
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+
+            try {
+                const response = await fetch(`${API_URL}/api/register`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showStatus("Registration complete. Switching to login...", false);
+                    setTimeout(() => switchTab('login'), 1500);
+                } else {
+                    showStatus(`Error: ${data.detail}`, true);
+                }
+            } catch (error) {
+                showStatus("Connection to server failed.", true);
+            }
+        }
+
+        // Handle Login
+        async function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            showStatus("Authenticating...", false);
+
+            // OAuth2 requires form URL encoded data
+            const params = new URLSearchParams();
+            params.append('username', username);
+            params.append('password', password);
+
+            try {
+                const response = await fetch(`${API_URL}/token`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Save token securely in local storage
+                    localStorage.setItem('access_token', data.access_token);
+                    localStorage.setItem('username', username);
+                    
+                    showStatus("Access Granted. Redirecting...", false);
+                    
+                    // Redirect to the community feed
+                    setTimeout(() => {
+                        window.location.href = 'feed.html';
+                    }, 1000);
+                } else {
+                    showStatus(`Error: ${data.detail}`, true);
+                }
+            } catch (error) {
+                showStatus("Connection to server failed.", true);
+            }
+        }
+    </script>
+</body>
+</html>

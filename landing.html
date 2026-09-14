@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design Hub | Welcome</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background-color: #000; 
+            color: #e5e5e5; 
+            font-family: 'Courier New', Courier, monospace; 
+            overflow-x: hidden;
+        }
+        
+        /* Fixed Matrix Background */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+        }
+
+        .neon-text { color: #00FF00; text-shadow: 0 0 10px rgba(0, 255, 0, 0.7), 0 0 20px rgba(0, 255, 0, 0.5); }
+        .neon-border { border: 1px solid #00FF00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.2); background: rgba(10, 10, 10, 0.85); backdrop-filter: blur(5px); }
+        .neon-button {
+            background-color: transparent;
+            border: 2px solid #00FF00;
+            color: #00FF00;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        .neon-button:hover {
+            background-color: #00FF00;
+            color: #000;
+            box-shadow: 0 0 25px #00FF00;
+            transform: scale(1.05);
+        }
+        
+        /* Smooth Scrolling */
+        html { scroll-behavior: smooth; }
+        
+        /* Justify Text */
+        .text-justify-custom {
+            text-align: justify;
+            text-justify: inter-word;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Interactive Matrix Background -->
+    <canvas id="matrix-canvas"></canvas>
+
+    <!-- Hero Section -->
+    <div class="min-h-screen flex flex-col items-center justify-center relative">
+        <div class="text-center">
+            <div class="flex items-center justify-center gap-4 mb-4">
+                <div class="w-20 h-20 flex items-center justify-center border-4 border-[#00FF00] bg-[#0a0a0a] rounded-xl shadow-[0_0_25px_rgba(0,255,0,0.5)] transform hover:rotate-90 transition-transform duration-500">
+                    <span class="text-4xl font-extrabold text-[#00FF00] tracking-tighter" style="text-shadow: 0 0 15px #00FF00;">DH</span>
+                </div>
+            </div>
+            <h1 class="text-6xl md:text-8xl font-bold neon-text mb-6">Design Hub<span class="text-white animate-pulse">_</span></h1>
+            <p class="text-xl md:text-2xl text-gray-300 mb-10 font-bold bg-black bg-opacity-50 inline-block px-4 py-2 rounded">
+                The Open-Source Version Control for Hardware.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-6 justify-center">
+                <!-- Links to your authentication page -->
+                <a href="auth.html" class="neon-button px-8 py-4 text-xl font-bold rounded tracking-widest uppercase">
+                    Launch Platform
+                </a>
+                <a href="#about" class="px-8 py-4 text-xl font-bold text-gray-400 hover:text-[#00FF00] transition duration-300 tracking-widest uppercase">
+                    Read Docs
+                </a>
+            </div>
+        </div>
+        
+        <!-- Scroll indicator -->
+        <div class="absolute bottom-10 animate-bounce">
+            <a href="#about" class="text-[#00FF00]">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+            </a>
+        </div>
+    </div>
+
+    <!-- About Us Section -->
+    <div id="about" class="min-h-screen flex flex-col items-center justify-center py-20 px-6">
+        <div class="max-w-6xl w-full mb-20">
+            <h2 class="text-4xl md:text-5xl font-bold neon-text mb-12 text-center">About Design Hub</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                
+                <!-- Point 1 -->
+                <div class="neon-border rounded-lg p-8 transform hover:-translate-y-2 transition duration-300">
+                    <div class="w-12 h-12 mb-6 text-[#00FF00]">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4">What is Design Hub?</h3>
+                    <p class="text-gray-400 leading-relaxed text-justify-custom">
+                        Design Hub is a secure, cloud-based platform built specifically for core engineers who love to design. It acts as a centralized repository where complex 3D geometry can be stored, analyzed, and visualized instantly in a web browser without requiring heavy desktop CAD software.
+                    </p>
+                </div>
+
+                <!-- Point 2 -->
+                <div class="neon-border rounded-lg p-8 transform hover:-translate-y-2 transition duration-300">
+                    <div class="w-12 h-12 mb-6 text-[#00FF00]">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4">Our Core Aim</h3>
+                    <p class="text-gray-400 leading-relaxed text-justify-custom">
+                        Our mission is to help Core Engineers automatically analyze geometry for Design for Manufacturing (DFM) constraints. We aim to foster an open-source hardware community where engineers can share their designs, collaborate globally, and build a verifiable, interactive portfolio of their mechanical problem-solving skills.
+                    </p>
+                </div>
+
+                <!-- Point 3 -->
+                <div class="neon-border rounded-lg p-8 transform hover:-translate-y-2 transition duration-300">
+                    <div class="w-12 h-12 mb-6 text-[#00FF00]">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4">The Architect</h3>
+                    <p class="text-gray-400 leading-relaxed mb-4 text-justify-custom">
+                        This is a highly secure, vibe-coded SaaS application engineered by <strong>Anubhav Sen</strong>. It bridges the gap between modern software practices and core engineering workflows.
+                    </p>
+                    <a href="https://www.linkedin.com/in/anubhav-sen-945240212" target="_blank" class="inline-flex items-center text-[#00FF00] hover:text-white transition font-bold mt-2">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                        Connect on LinkedIn
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- What Makes Design Hub Different -->
+        <div class="max-w-4xl w-full">
+            <h2 class="text-3xl md:text-4xl font-bold neon-text mb-8 text-center">What Makes Design Hub Different?</h2>
+            
+            <div class="space-y-8">
+                <div class="neon-border rounded-lg p-8 bg-[#0a0a0a]">
+                    <h3 class="text-xl font-bold text-white mb-3 flex items-center">
+                        <svg class="w-6 h-6 mr-3 text-[#00FF00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Automated DFM Validation
+                    </h3>
+                    <p class="text-gray-400 leading-relaxed text-justify-custom">
+                        Design Hub doesn't just store files; it analyzes them. Our backend utilizes Trimesh to perform immediate geometric evaluations. The "DFM Passed" status relies on a "Watertight" check. In mechanical engineering, an STL file must represent a closed manifold surface to be 3D printable or suitable for CNC toolpath generation. If the mesh contains holes, self-intersections, or non-manifold edges, the test fails, warning the engineer of a "Mesh not watertight" error before it hits the manufacturing floor.
+                    </p>
+                </div>
+
+                <div class="neon-border rounded-lg p-8 bg-[#0a0a0a]">
+                    <h3 class="text-xl font-bold text-white mb-3 flex items-center">
+                        <svg class="w-6 h-6 mr-3 text-[#00FF00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        Computational Geometry & Volume
+                    </h3>
+                    <p class="text-gray-400 leading-relaxed text-justify-custom">
+                        When an STL is uploaded, the platform instantly computes its physical properties. The volume calculation operates using the Divergence Theorem, which allows the system to calculate the volume of a 3D object by integrating over its closed 2D boundary surface. The algorithm computes the signed volume of the tetrahedrons formed by the origin and each triangular face of the mesh. The sum of these signed volumes yields the exact volume of the enclosed solid, allowing engineers to quickly estimate material costs and mass.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Matrix Rain with Cursor Interaction Script -->
+    <script>
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()_+ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ';
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = Array.from({ length: columns }).fill(1);
+
+        // Track mouse position
+        let mouse = { x: -1000, y: -1000 };
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        function drawMatrix() {
+            // Semi-transparent black to create the fading trail effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars.charAt(Math.floor(Math.random() * chars.length));
+                const x = i * fontSize;
+                const y = drops[i] * fontSize;
+
+                // Calculate distance from cursor to the current dropping character
+                const dx = x - mouse.x;
+                const dy = y - mouse.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                // Cursor interaction: characters glow white when the mouse is near
+                if (distance < 120) {
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.font = `bold ${fontSize + 2}px monospace`;
+                } else {
+                    ctx.fillStyle = '#00FF00';
+                    ctx.font = `${fontSize}px monospace`;
+                }
+
+                ctx.fillText(text, x, y);
+
+                // Reset drop to top randomly to create staggered rain
+                if (y > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(drawMatrix, 50);
+    </script>
+</body>
+</html>
