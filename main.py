@@ -130,8 +130,19 @@ async def upload_model(
         if mesh.is_empty:
             raise ValueError("Empty geometry")
             
+        # --- NEW: Robust Mesh Cleanup Pipeline ---
+        mesh.process() # Merges disconnected vertices and removes duplicate/degenerate faces
+        mesh.fix_normals() # Forces inner cavity normals to point correctly for volume subtraction
+            
         is_watertight = mesh.is_watertight
-        volume = str(round(mesh.volume, 2)) if mesh.is_volume else "N/A"
+        
+        # Calculate volume. Using abs() ensures that if a CAD export inverted the whole mesh, it resolves correctly.
+        if mesh.is_volume:
+            volume = str(round(abs(mesh.volume), 2))
+        else:
+            # Fallback for complex shapes that might technically fail is_volume due to micro-holes
+            volume = str(round(abs(mesh.volume), 2)) if hasattr(mesh, 'volume') and mesh.volume else "N/A"
+            
         bbox = " x ".join([str(round(dim, 2)) for dim in mesh.bounding_box.extents])
         
         # Updated tagging logic to avoid conflict with major project
